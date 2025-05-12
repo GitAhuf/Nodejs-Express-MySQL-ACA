@@ -1,5 +1,4 @@
 import express from "express";
-
 import {
   agregarEstudiante,
   listarEstudiantes,
@@ -11,84 +10,72 @@ import {
 
 const router = express.Router();
 
+// ─── Landing ────────────────────────────────────────────────────────────
+router.get("/", (req, res) => {
+  res.render("inicio");
+});
+
+// ─── CRUD Estudiantes ───────────────────────────────────────────────────
+
+// Listar
 router.get("/Crud-Completo-con-NodeJS-Express-y-MySQL", async (req, res) => {
   try {
     const estudiantes = await listarEstudiantes();
     res.render("pages/estudiantes", { estudiantes });
-  } catch (error) {
-    const { status, message } = error;
-    res.status(status || 500).json({ error: message });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
-// Registrar un nuevo estudiante
+// Crear
 router.post("/estudiantes", async (req, res) => {
   const { nombre_alumno, email_alumno, curso_alumno } = req.body;
-
   try {
     await agregarEstudiante({ nombre_alumno, email_alumno, curso_alumno });
-    res.redirect("/");
-  } catch (error) {
-    const { status, message } = error;
-    res.status(status || 500).json({ error: message });
+    res.redirect("/Crud-Completo-con-NodeJS-Express-y-MySQL");
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
-// Detalles del estudiante
+// Ver detalles
 router.get("/detalles/:id", async (req, res) => {
-  const estudianteId = req.params.id;
-
   try {
-    const estudiante = await obtenerDetallesEstudiante(estudianteId);
+    const estudiante = await obtenerDetallesEstudiante(req.params.id);
     res.render("pages/detalles_estudiante", { estudiante });
-  } catch (error) {
-    const { status, message } = error;
-    res.status(status || 500).json({ error: message });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
-// Mostrar formulario para actualizar un estudiante
+// Formulario de actualización
 router.get("/formulario-actualizar-estudiante/:id", async (req, res) => {
-  const estudianteId = req.params.id;
-
   try {
-    const estudiante = await obtenerDetallesEstudianteUpdate(estudianteId);
-
+    const estudiante = await obtenerDetallesEstudianteUpdate(req.params.id);
     res.render("pages/update_estudiante", { estudiante });
-  } catch (error) {
-    const { status, message } = error;
-    res.status(status || 500).json({ error: message });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
-// Ruta para actualizar un estudiante por ID
+// Actualizar
 router.post("/actualizar-estudiante/:id", async (req, res) => {
   const { nombre_alumno, email_alumno, curso_alumno } = req.body;
-  const id = req.params.id;
-
   try {
-    await actualizarEstudiante(id, {
-      nombre_alumno,
-      email_alumno,
-      curso_alumno,
-    });
-
+    await actualizarEstudiante(req.params.id, { nombre_alumno, email_alumno, curso_alumno });
     res.redirect("/Crud-Completo-con-NodeJS-Express-y-MySQL");
-  } catch (error) {
-    const { status, message } = error;
-    res.status(status || 500).json({ error: message });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 
-// Ruta para borrar un estudiante por ID
+// Borrar
 router.post("/borrar-estudiante/:id", async (req, res) => {
-  const id = req.params.id;
   try {
-    await eliminarEstudiante(id);
+    await eliminarEstudiante(req.params.id);
     res.redirect("/Crud-Completo-con-NodeJS-Express-y-MySQL");
-  } catch (error) {
-    const { status, message } = error;
-    res.status(status || 500).json({ error: message });
+  } catch (err) {
+    res.status(err.status || 500).json({ error: err.message });
   }
 });
 

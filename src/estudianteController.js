@@ -16,10 +16,17 @@ export const agregarEstudiante = async ({
   }
 };
 
-// Obtener todos los estudiantes
+// Obtener todos los estudiantes (con alias para la vista)
 export const listarEstudiantes = async () => {
   try {
-    const [rows] = await pool.query("SELECT * FROM estudiantes");
+    const [rows] = await pool.query(`
+      SELECT
+        id_estudiante   AS id,
+        nombre_alumno   AS nombre,
+        email_alumno    AS email,
+        curso_alumno    AS curso
+      FROM estudiantes
+    `);
     return rows;
   } catch (error) {
     throw { status: 500, message: "Error al obtener estudiantes" };
@@ -35,8 +42,7 @@ export const obtenerDetallesEstudiante = async (id) => {
     );
 
     if (rows.length === 1) {
-      const estudiante = rows[0];
-      return estudiante;
+      return rows[0];
     } else {
       throw { status: 404, message: "Estudiante no encontrado" };
     }
@@ -46,7 +52,7 @@ export const obtenerDetallesEstudiante = async (id) => {
   }
 };
 
-//Obtener formualrio para actualizar estudiante seleccionado
+// Obtener datos para formulario de actualización
 export async function obtenerDetallesEstudianteUpdate(id) {
   try {
     const [rows] = await pool.query(
@@ -86,7 +92,10 @@ export const actualizarEstudiante = async (
 // Eliminar un estudiante por ID
 export const eliminarEstudiante = async (id) => {
   try {
-    await pool.query("DELETE FROM estudiantes WHERE id_estudiante = ?", [id]);
+    await pool.query(
+      "DELETE FROM estudiantes WHERE id_estudiante = ?",
+      [id]
+    );
   } catch (error) {
     throw {
       status: 500,
