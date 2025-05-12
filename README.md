@@ -1,56 +1,130 @@
-# CRUD Nodejs con Express y MySQL2
+# Node.js CRUD con Express y MySQL (con Docker y Login)
 
-    Crud completo con Node js y MySQL
-    Este proyecto es una aplicación CRUD (Crear, Leer, Actualizar y Borrar) en Node.js utilizando el framework Express y la biblioteca `mysql2` para interactuar con una base de datos MySQL.
+Proyecto de ejemplo que implementa un CRUD completo de “estudiantes” sobre MySQL, con:
+- Autenticación básica (email + contraseña hasheada con bcrypt + sesiones)
+- Vistas EJS y responsive menu
+- Configuración mediante `.env` → cambio automático entre local (Docker) y RDS (AWS)
+- Docker multi-stage (Alpine) para imagen de Node ligera (~216 MB)
+- Inicialización automática de esquema y datos en MySQL
 
-## Pasos para crear la aplicación
+---
 
-### Paso 1: Configuración inicial
+## 📋 Características
 
-1.  Crea un nuevo directorio para tu proyecto:
+- **CRUD** de estudiantes: Listar, Crear, Ver Detalle, Actualizar, Borrar  
+- **Login / Logout**: sesión basada en cookies  
+- **Docker Compose**:  
+  - `docker-compose.yml` → producción (solo app)  
+  - `docker-compose.override.yml` → desarrollo (app + MySQL local)  
+- **Multi-stage Dockerfile** en Alpine: imagen de producción pequeña  
+- **Auto-init SQL**: scripts en `docker-entrypoint-initdb.d/` para tablas `users` y `estudiantes`
 
-    mkdir nodejs-crud-mysql
-    cd nodejs-crud-mysql
+---
 
-2.  Inicializa un proyecto Node.js:
+## 🔧 Prerrequisitos
 
-    npm init -y
+- [Node.js 20+](https://nodejs.org/)  
+- [Docker & Docker Compose](https://docs.docker.com/)  
+- (Opcional) Cuenta AWS RDS y AWS CLI configurada  
 
-3.  Instala las dependencias necesarias: Express, Ejs y mysql2:
+---
 
-    npm install express ejs mysql2 cors
+## ⚙️ Instalación local (sin Docker)
 
-4.  Crea un archivo llamado db.js en la raíz de tu proyecto para configurar la conexión a la base de datos:
+1. Clona el repositorio:  
+   ```bash
+   git clone <tu-repo-url> && cd Nodejs-Express-MySQL-ACA
 
-    import mysql from 'mysql2/promise';
+2. Instala dependencias:
+    bash
+    Copiar
+    Editar
+    npm install
 
-        const pool = mysql.createPool({
-        host: 'localhost',
-        user: 'root',
-        password: '', // Coloca tu contraseña de MySQL
-        database: 'CrudNodejs',
-        waitForConnections: true,
-        connectionLimit: 10,
-        queueLimit: 0,
-        });
+3. Crea un archivo .env en raíz, conteniendo:
+    PORT=3600
+    DB_HOST=db
+    DB_PORT=3306
+    DB_USER=root
+    DB_PASSWORD=miPassword
+    DB_NAME=CrudNodejs
+    SESSION_SECRET=unSecretoMuySegurísimo123!
 
-        export default pool;
+4. (Opcional) Inicializa tu propia base MySQL local o apunta a un RDS cambiando DB_HOST y credenciales.
 
-#### Para correr el proyecto solo ejecutas
+📂 Estructura de proyecto
+    ├── src/
+    │   ├── app.js                # Configuración Express, sesiones y router
+    │   ├── router.js             # Rutas públicas (login) y protegidas (CRUD)
+    │   ├── db.js                 # Pool MySQL (mysql2/promise)
+    │   ├── authController.js     # Login / Logout
+    │   ├── estudianteController.js
+    │   └── middleware/auth.js    # ensureAuth
+    ├── views/
+    │   ├── includes/             # head.ejs, header.ejs, scripts.ejs
+    │   ├── login.ejs
+    │   └── pages/                # estudiantes.ejs, detalles_estudiante.ejs, update_estudiante.ejs
+    ├── public/                   # imágenes, CSS, JS front
+    ├── docker-entrypoint-initdb.d/
+    │   └── init.sql             # esquema y datos iniciales
+    ├── Dockerfile                # multi-stage Alpine
+    ├── docker-compose.yml        # producción (solo app)
+    ├── docker-compose.override.yml # desarrollo (app + db)
+    ├── .env                      # variables dev
+    ├── .env.production           # variables prod (RDS)
+    └── package.json
 
-    npm install o npm i
+🚀 Modo Desarrollo (Docker)
+    # baja todo y limpia volúmenes:
+    docker compose down -v --remove-orphans
 
-#### Ejecutar el proyecto
+    # arranca con hot-reload y MySQL local:
+    docker compose up --build
 
-    node --watch app.js ----> Opcion 1
-    node app.js    -----> Opcion 2
+    App en http://localhost:3600/
+    MySQL en localhost:3307
+    Cambios en código se reflejan al instante
 
-#### Notas
+🛠️ Modo Producción (Docker + RDS)
 
-    https://www.npmjs.com/package/mysql2
+1. Asegúrate de tener .env.production con tu endpoint RDS:
+    PORT=3600
+    DB_HOST=mi-endpoint-rds.xxxxxx.us-east-2.rds.amazonaws.com
+    DB_PORT=3306
+    DB_USER=adminRDS
+    DB_PASSWORD=superSecretoRDS
+    DB_NAME=CrudNodejs
+    SESSION_SECRET=unSecretoMuySegurísimo123!
 
-    La propiedad "type": "module", en el archivo packege.json indica que estamos usando el sistema de modulos ECMAScript(ESM).
-    Con el fin de las palabras claves 'import' y 'export' para importar y exportar modulos respectivamente.
-    Cuando usamos (ESM) algunas caracteriscticas de nodejs como require() y module.exports no estan disponibles, en su lugar estan import y export.
+2. Solo levanta la app (sin DB local):
+    docker compose -f docker-compose.yml up --build -d
 
-![](https://github.com/urian121/CRUD-Nodejs-Express-MySQL/blob/master/crud-completo-nodejs-express-mysql-urian-viera.png)
+    🔐 Credenciales de prueba
+    Email: admin@example.com
+
+    Password: la que generaste para el hash en init.sql (por ejemplo MiPass123!)
+📦 Comandos útiles
+    npm scripts
+
+    npm run dev → ts-node-dev o node --watch src/app.js
+
+    (añade build y start si migras a TS/compilas)
+
+    Docker Compose
+
+    docker compose down -v --remove-orphans
+
+    docker compose up --build (dev)
+
+    docker compose -f docker-compose.yml up --build -d (prod)
+
+    Ver tamaño de imagen
+    docker images | grep nodejs-express-mysql-aca-app
+
+🤝 Contribuir
+
+1. Haz fork y crea una rama:
+    git checkout -b feature/mi-nueva-funcionalidad
+2. Implementa el cambio y haz commit.
+
+3. Abre un Pull Request describiendo tu propuesta.

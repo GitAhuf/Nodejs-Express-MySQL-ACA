@@ -1,32 +1,19 @@
 services:
-  # ========== APP NODE.js ==========
   app:
     build: .
     container_name: nodejs-express-app
+    restart: unless-stopped
     ports:
-      - "${PORT}:${PORT}"         # mapea el puerto definido en .env
+      - "${PORT}:${PORT}"
     env_file:
-      - .env                      # en desarrollo usa .env; en prod: --env-file .env.production
-    volumes:
-      - .:/app                    # monta tu código en /app para hot-reload de front/back
-    depends_on:
-      - db                        # solo necesario en dev
-    command: npm run dev         # arranca en modo watch
+      - .env.production    # RDS creds, SESSION_SECRET, etc.
+    command: node src/app.js
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "3"
 
-  # ========== MySQL (solo para DEV) ==========
-  db:
-    image: mysql:8.0
-    container_name: mysql-db
-    restart: always
-    environment:
-      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
-      MYSQL_DATABASE:      ${DB_NAME}
-    ports:
-      - "3307:3306"              # host:container → evita choque con MySQL local
-    volumes:
-      - db_data:/var/lib/mysql   # persiste datos en volumen
-      - ./docker-entrypoint-initdb.d:/docker-entrypoint-initdb.d:ro
-                                # los .sql aquí se ejecutan la 1ª vez
-
-volumes:
-  db_data:
+networks:
+  default:
+    driver: bridge
