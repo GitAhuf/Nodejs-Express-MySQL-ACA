@@ -1,4 +1,37 @@
 <header class="header">
+  <a href="/" class="logo">
+    <img src="https://s3.com.co/wp-content/uploads/2017/03/cun-1.png" alt="Logo" />
+  </a>
+
+  <input class="menu-btn" type="checkbox" id="menu-btn" />
+  <label class="menu-icon" for="menu-btn"><span class="navicon"></span></label>
+
+  <ul class="menu">
+    <li><a class="menu-item" href="/">Inicio</a></li>
+    <li><a class="menu-item" href="/Crud-Completo-con-NodeJS-Express-y-MySQL">Estudiantes</a></li>
+
+    <% if (session && session.userId) { %>
+      <li>
+        <!-- form oculto que hará POST a /logout -->
+        <form id="logoutForm" action="/logout" method="POST" style="display:none;"></form>
+        <!-- este <a> tiene tu clase menu-item y dispara el form -->
+        <a
+          href="#"
+          class="menu-item"
+          onclick="event.preventDefault(); document.getElementById('logoutForm').submit();"
+        >
+          Cerrar Sesión
+        </a>
+      </li>
+    <% } else { %>
+      <li><a class="menu-item" href="/login">Login</a></li>
+    <% } %>
+  </ul>
+</header>
+
+
+
+<!-- <header class="header">
   <a href="./" class="logo">
     <img src="public/imgs/logo.png" alt="Logo" />
   </a>
@@ -14,4 +47,4 @@
       </a>
     </li>
   </ul>
-</header>
+</header> -->

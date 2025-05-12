@@ -1,20 +1,40 @@
-# Imagen base de Node.js
-FROM node:20
+# ─── Etapa de build ─────────────────────────────────────────────
+FROM node:20-alpine AS builder
 
-# Directorio de trabajo dentro del contenedor
+# Directorio de trabajo en el contenedor
 WORKDIR /app
 
-# Copiar package.json y package-lock.json
+# Copiar definiciones de dependencias
 COPY package*.json ./
 
-# Instalar dependencias
-RUN npm install
+# Instalar todas las dependencias (dev + prod) para build-time
+RUN npm ci
 
-# Copiar todos los archivos del proyecto
+# Copiar el resto del código de la aplicación
 COPY . .
 
-# Exponer el puerto de la aplicación (ajústalo si es diferente)
-EXPOSE 3000
+# ─── Etapa de producción ───────────────────────────────────────────
+FROM node:20-alpine
 
-# Comando para ejecutar la app
-CMD ["npm", "run", "dev"]
+# Define que estamos en producción
+ENV NODE_ENV=production
+
+# Directorio de trabajo
+WORKDIR /app
+
+# Copiar solo package.json para producción
+COPY --from=builder /app/package*.json ./
+
+# Instalar únicamente dependencias de producción
+RUN npm ci --omit=dev
+
+# Copiar artefactos de la aplicación desde la etapa de build
+COPY --from=builder /app/src ./src
+COPY --from=builder /app/views ./views
+COPY --from=builder /app/public ./public
+
+# Puerto en el que escucha tu aplicación
+EXPOSE 3600
+
+# Comando para ejecutar la aplicación en producción
+CMD ["node", "src/app.js"]
